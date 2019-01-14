@@ -4,11 +4,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/catsworld/qq-bot-api/cqcode"
 	"io"
 	"io/ioutil"
 	"net/url"
 	"reflect"
+
+	"github.com/siskinc/qq-bot-api/cqcode"
 )
 
 // NewMessage creates a new Message.

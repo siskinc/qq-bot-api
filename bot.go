@@ -9,9 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/catsworld/qq-bot-api/cqcode"
-	"github.com/mitchellh/mapstructure"
-	"golang.org/x/net/websocket"
 	"io"
 	"io/ioutil"
 	"log"
@@ -20,6 +17,10 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/siskinc/qq-bot-api/cqcode"
+	"golang.org/x/net/websocket"
 )
 
 // BotAPI allows you to interact with the Coolq HTTP API.
@@ -644,17 +645,16 @@ func (bot *BotAPI) ListenForWebhookSync(config WebhookConfig, handler func(updat
 
 	http.HandleFunc(config.Pattern, func(w http.ResponseWriter, r *http.Request) {
 		bytes, _ := ioutil.ReadAll(r.Body)
-
-		if bot.Secret != "" {
-			mac := hmac.New(sha1.New, []byte(bot.Secret))
-			mac.Write(bytes)
-			expectedMac := r.Header.Get("X-Signature")[len("sha1="):]
-			messageMac := hex.EncodeToString(mac.Sum(nil))
-			if expectedMac != messageMac {
-				bot.debugLog("ListenForWebhook HMAC", expectedMac, messageMac)
-				return
-			}
-		}
+		// if bot.Secret != "" {
+		// 	mac := hmac.New(sha1.New, []byte(bot.Secret))
+		// 	mac.Write(bytes)
+		// 	expectedMac := r.Header.Get("X-Signature")[len("sha1="):]
+		// 	messageMac := hex.EncodeToString(mac.Sum(nil))
+		// 	if expectedMac != messageMac {
+		// 		bot.debugLog("ListenForWebhook HMAC", expectedMac, messageMac)
+		// 		return
+		// 	}
+		// }
 
 		var update Update
 		json.Unmarshal(bytes, &update)
@@ -665,7 +665,6 @@ func (bot *BotAPI) ListenForWebhookSync(config WebhookConfig, handler func(updat
 		}
 
 		bot.debugLog("ListenForWebhook", update)
-
 		resp, _ := json.Marshal(handler(update))
 
 		w.Header().Set("Content-Type", "application/json")

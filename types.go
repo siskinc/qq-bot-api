@@ -2,8 +2,9 @@ package qqbotapi
 
 import (
 	"encoding/json"
-	"github.com/catsworld/qq-bot-api/cqcode"
 	"strconv"
+
+	"github.com/siskinc/qq-bot-api/cqcode"
 )
 
 // APIResponse is a response from the Coolq HTTP API with the result

@@ -2,9 +2,10 @@ package qqbotapi
 
 import (
 	"encoding/json"
-	"github.com/catsworld/qq-bot-api/cqcode"
 	"net/url"
 	"testing"
+
+	"github.com/siskinc/qq-bot-api/cqcode"
 )
 
 func TestNewImageWeb(t *testing.T) {
