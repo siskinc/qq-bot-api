@@ -4,6 +4,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Chattable is any config type that can be sent.
@@ -337,6 +339,7 @@ func (config HandleFriendRequestConfig) values() (url.Values, error) {
 	}
 
 	v.Add("remark", config.Remark)
+	log.Debug("mmpmmpmmp")
 
 	return v, nil
 }

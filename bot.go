@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -19,6 +18,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+	log "github.com/sirupsen/logrus"
 	"github.com/siskinc/qq-bot-api/cqcode"
 	"golang.org/x/net/websocket"
 )
@@ -108,7 +108,7 @@ func NewBotAPIWithWSClient(token string, api string) (*BotAPI, error) {
 	if err != nil {
 		return nil, errors.New("failed to dial cqhttp api websocket")
 	}
-	bot.debugLog("Dial /api/ ws", "dial cqhttp api websocket success")
+	log.Debug("Dial /api/ ws", "dial cqhttp api websocket success")
 	// Dial /event/ ws
 	eventConfig, err := websocket.NewConfig(api+"/event/", "http://localhost/")
 	if err != nil {
@@ -119,7 +119,7 @@ func NewBotAPIWithWSClient(token string, api string) (*BotAPI, error) {
 	if err != nil {
 		return nil, errors.New("failed to dial cqhttp event websocket")
 	}
-	bot.debugLog("Dial /event/ ws", "dial cqhttp event websocket success")
+	log.Debug("Dial /event/ ws", "dial cqhttp event websocket success")
 
 	bot.WSPendingRequests = make(map[int]chan APIResponse)
 	bot.WSRequestTimeout = time.Second * 10
@@ -128,7 +128,7 @@ func NewBotAPIWithWSClient(token string, api string) (*BotAPI, error) {
 			// get api response
 			resp := APIResponse{}
 			if err := websocket.JSON.Receive(bot.WSAPIClient, &resp); err != nil {
-				bot.debugLog("WS APIResponse", "failed to read apiresponse (%v)", err)
+				log.Debug("WS APIResponse", "failed to read apiresponse (%v)", err)
 				continue
 			}
 			e, ok := resp.Echo.(int)
@@ -180,7 +180,7 @@ func (bot *BotAPI) makeHTTPRequest(endpoint string, params url.Values) (APIRespo
 		return apiResp, err
 	}
 
-	bot.debugLog("MakeRequest", "%s resp: %s", endpoint, bytes)
+	log.Infof("MakeRequest %s resp: %s", endpoint, bytes)
 
 	if apiResp.Status != "ok" {
 		return apiResp, errors.New(apiResp.Status + " " + strconv.Itoa(apiResp.RetCode))
@@ -255,7 +255,7 @@ func (bot *BotAPI) makeMessageRequest(endpoint string, params url.Values) (Messa
 	var message Message
 	json.Unmarshal(resp.Data, &message)
 
-	bot.debugLog(endpoint, params, message)
+	log.Debug(endpoint, params, message)
 
 	return message, nil
 }
@@ -274,7 +274,7 @@ func (bot *BotAPI) GetMe() (User, error) {
 	var user User
 	json.Unmarshal(resp.Data, &user)
 
-	bot.debugLog("GetMe", nil, user)
+	log.Debug("GetMe", nil, user)
 
 	return user, nil
 }
@@ -290,7 +290,7 @@ func (bot *BotAPI) GetStrangerInfo(userID int64) (User, error) {
 	var user User
 	json.Unmarshal(resp.Data, &user)
 
-	bot.debugLog("GetStrangerInfo", nil, user)
+	log.Debug("GetStrangerInfo", nil, user)
 
 	return user, nil
 }
@@ -310,7 +310,7 @@ func (bot *BotAPI) GetGroupMemberInfo(groupID int64, userID int64, noCache bool)
 	var user User
 	json.Unmarshal(resp.Data, &user)
 
-	bot.debugLog("GetGroupMemberInfo", nil, user)
+	log.Debug("GetGroupMemberInfo", nil, user)
 
 	return user, nil
 }
@@ -328,7 +328,7 @@ func (bot *BotAPI) GetGroupMemberList(groupID int64) ([]User, error) {
 	users := make([]User, 0)
 	json.Unmarshal(resp.Data, &users)
 
-	bot.debugLog("GetGroupMemberInfo", nil, users)
+	log.Debug("GetGroupMemberInfo", nil, users)
 
 	return users, nil
 }
@@ -343,7 +343,7 @@ func (bot *BotAPI) GetGroupList() ([]Group, error) {
 	groups := make([]Group, 0)
 	json.Unmarshal(resp.Data, &groups)
 
-	bot.debugLog("GetGroupList", nil, groups)
+	log.Debug("GetGroupList", nil, groups)
 
 	return groups, nil
 }
@@ -536,7 +536,7 @@ func (bot *BotAPI) getUpdatesViaHTTP(config UpdateConfig) ([]Update, error) {
 		}
 	}
 
-	bot.debugLog("getUpdates", v, updates)
+	log.Debug("getUpdates", v, updates)
 
 	return updates, nil
 }
@@ -585,7 +585,7 @@ func (bot *BotAPI) ListenForWebSocket(config WebhookConfig) UpdatesChannel {
 	http.Handle(config.Pattern, websocket.Handler(func(ws *websocket.Conn) {
 		var update Update
 		if err := websocket.JSON.Receive(ws, &update); err != nil {
-			bot.debugLog("ListenForWebSocket", "failed to read event (%v)", err)
+			log.Debug("ListenForWebSocket", "failed to read event (%v)", err)
 			return
 		}
 
@@ -594,7 +594,7 @@ func (bot *BotAPI) ListenForWebSocket(config WebhookConfig) UpdatesChannel {
 			bot.PreloadUserInfo(&update)
 		}
 
-		bot.debugLog("ListenForWebSocket", update)
+		log.Debug("ListenForWebSocket", update)
 
 		ch <- update
 	}))
@@ -615,7 +615,7 @@ func (bot *BotAPI) ListenForWebhook(config WebhookConfig) UpdatesChannel {
 			expectedMac := r.Header.Get("X-Signature")[len("sha1="):]
 			messageMac := hex.EncodeToString(mac.Sum(nil))
 			if expectedMac != messageMac {
-				bot.debugLog("ListenForWebhook HMAC", expectedMac, messageMac)
+				log.Debug("ListenForWebhook HMAC", expectedMac, messageMac)
 				return
 			}
 		}
@@ -628,7 +628,7 @@ func (bot *BotAPI) ListenForWebhook(config WebhookConfig) UpdatesChannel {
 			bot.PreloadUserInfo(&update)
 		}
 
-		bot.debugLog("ListenForWebhook", update)
+		log.Debug("ListenForWebhook", update)
 
 		ch <- update
 
@@ -651,7 +651,7 @@ func (bot *BotAPI) ListenForWebhookSync(config WebhookConfig, handler func(updat
 		// 	expectedMac := r.Header.Get("X-Signature")[len("sha1="):]
 		// 	messageMac := hex.EncodeToString(mac.Sum(nil))
 		// 	if expectedMac != messageMac {
-		// 		bot.debugLog("ListenForWebhook HMAC", expectedMac, messageMac)
+		// 		log.Debug("ListenForWebhook HMAC", expectedMac, messageMac)
 		// 		return
 		// 	}
 		// }
@@ -664,7 +664,7 @@ func (bot *BotAPI) ListenForWebhookSync(config WebhookConfig, handler func(updat
 			bot.PreloadUserInfo(&update)
 		}
 
-		bot.debugLog("ListenForWebhook", update)
+		log.Debug("ListenForWebhook", update)
 		resp, _ := json.Marshal(handler(update))
 
 		w.Header().Set("Content-Type", "application/json")
