@@ -180,7 +180,10 @@ func (bot *BotAPI) makeHTTPRequest(endpoint string, params url.Values) (APIRespo
 		return apiResp, err
 	}
 
-	log.Infof("MakeRequest %s resp: %s", endpoint, bytes)
+	log.WithFields(log.Fields{
+		"endpoint": endpoint,
+		"bytes":    bytes,
+	}).Debug("")
 
 	if apiResp.Status != "ok" {
 		return apiResp, errors.New(apiResp.Status + " " + strconv.Itoa(apiResp.RetCode))
