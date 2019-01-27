@@ -30,6 +30,7 @@ type BotAPI struct {
 	Debug       bool   `json:"debug"`
 	Buffer      int    `json:"buffer"`
 	APIEndpoint string `json:"api_endpoint"`
+	DebugQQ     string `json:"debug_qq"`
 
 	Self              User                     `json:"-"`
 	Client            *http.Client             `json:"-"`
@@ -373,6 +374,10 @@ func (bot *BotAPI) IsMessageToMe(message Message) bool {
 // It requires the Chattable to send.
 func (bot *BotAPI) Send(c Chattable) (Message, error) {
 	v, err := c.values()
+	userId := v.Get("user_id")
+	if bot.Debug && userId != bot.DebugQQ {
+		return Message{}, fmt.Errorf("Need Debug QQ")
+	}
 	if err != nil {
 		return Message{}, err
 	}
